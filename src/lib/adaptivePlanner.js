@@ -233,7 +233,7 @@ export function generateSmartPlan(preferences, sessions, allSubjects) {
     if (preferredSubjects.length > 0) {
         preferredSubjects.forEach(subjectName => {
             const subject = allSubjects.find(s => s.name === subjectName)
-            if (subject && subject.topics) {
+            if (subject && subject.topics && Array.isArray(subject.topics)) {
                 subject.topics.forEach(topic => {
                     topicPool.push({
                         subject: subjectName,
@@ -243,16 +243,26 @@ export function generateSmartPlan(preferences, sessions, allSubjects) {
                 })
             }
         })
-    } else {
-        // If no preferences, add all subjects
+    }
+
+    // If no preferences OR pool is still too small, add all subjects as fallback
+    if (preferredSubjects.length === 0 || topicPool.length < 5) {
         allSubjects.forEach(subject => {
-            subject.topics.forEach(topic => {
-                topicPool.push({
-                    subject: subject.name,
-                    topic: topic,
-                    isWeak: false
+            if (subject && subject.topics && Array.isArray(subject.topics)) {
+                subject.topics.forEach(topic => {
+                    // Avoid duplicates
+                    const exists = topicPool.some(t =>
+                        t.subject === subject.name && t.topic === topic
+                    )
+                    if (!exists) {
+                        topicPool.push({
+                            subject: subject.name,
+                            topic: topic,
+                            isWeak: false
+                        })
+                    }
                 })
-            })
+            }
         })
     }
 
